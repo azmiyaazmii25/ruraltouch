@@ -12,7 +12,8 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/products', require('./routes/products'));
-
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/feedback', require('./routes/feedback'));
 // Test route
 app.get('/', (req, res) => {
   res.send('RuralTouch API is running');
