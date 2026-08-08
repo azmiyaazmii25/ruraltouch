@@ -1,32 +1,61 @@
 import { useState } from 'react';
 import {
-  View, Text, Image, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,
+  View, Text, Image, TouchableOpacity, ScrollView,
+  StyleSheet, ActivityIndicator, Alert,
 } from 'react-native';
 import api from '../api/api';
+import { useAuth } from '../context/AuthContext';
+import PaymentScreen from './PaymentScreen';
 
-export default function ProductDetailScreen({ product, onBack, onOrdered }) {
+export default function ProductDetailScreen({ product, onBack }) {
+  const { user } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [placing, setPlacing] = useState(false);
+  const [paymentData, setPaymentData] = useState(null); // { order, razorpayInfo }
 
-  const total = product.price * quantity;
+  const increase = () => setQuantity((q) => Math.min(q + 1, product.stock || 99));
+  const decrease = () => setQuantity((q) => Math.max(q - 1, 1));
 
   const placeOrder = async () => {
     setPlacing(true);
     try {
-      await api.post('/orders', { productId: product._id, quantity });
-      Alert.alert('Order placed', `Order for ${quantity} x ${product.title} placed.`);
-      onOrdered();
+      const orderRes = await api.post('/orders', { productId: product._id, quantity });
+      const order = orderRes.data;
+      order.product = product; // attach for display in PaymentScreen
+
+      const paymentRes = await api.post(`/orders/${order._id}/create-payment`);
+
+      setPaymentData({ order, razorpayInfo: paymentRes.data });
     } catch (err) {
+      console.log('placeOrder error', err.response?.data || err.message);
       Alert.alert('Error', err.response?.data?.message || 'Could not place order.');
     } finally {
       setPlacing(false);
     }
   };
 
+  if (paymentData) {
+    return (
+      <PaymentScreen
+        order={paymentData.order}
+        razorpayInfo={paymentData.razorpayInfo}
+        user={user}
+        onSuccess={() => {
+          setPaymentData(null);
+          Alert.alert('Payment successful!', 'Your order is confirmed.', [{ text: 'OK', onPress: onBack }]);
+        }}
+        onCancel={() => {
+          setPaymentData(null);
+          Alert.alert('Payment cancelled', 'Your order was placed but payment is still pending. You can pay later from My Orders.', [{ text: 'OK', onPress: onBack }]);
+        }}
+      />
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={onBack}>
-        <Text style={styles.back}>← Back</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+        <Text style={styles.backText}>{'< Back'}</Text>
       </TouchableOpacity>
 
       {product.imageUrl ? (
@@ -38,49 +67,55 @@ export default function ProductDetailScreen({ product, onBack, onOrdered }) {
       <Text style={styles.title}>{product.title}</Text>
       <Text style={styles.artisan}>by {product.artisan?.name || 'Unknown'}</Text>
       <Text style={styles.price}>₹{product.price}</Text>
-      <Text style={styles.desc}>{product.description}</Text>
-      <Text style={styles.stock}>{product.stock} in stock</Text>
+      <Text style={styles.description}>{product.description}</Text>
+      <Text style={styles.stock}>In stock: {product.stock}</Text>
 
-      <View style={styles.qtyRow}>
-        <TouchableOpacity
-          style={styles.qtyBtn}
-          onPress={() => setQuantity((q) => Math.max(1, q - 1))}
-        >
-          <Text style={styles.qtyBtnText}>−</Text>
-        </TouchableOpacity>
-        <Text style={styles.qtyValue}>{quantity}</Text>
-        <TouchableOpacity
-          style={styles.qtyBtn}
-          onPress={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-        >
-          <Text style={styles.qtyBtnText}>+</Text>
-        </TouchableOpacity>
+      <View style={styles.quantityRow}>
+        <Text style={styles.label}>Quantity</Text>
+        <View style={styles.stepper}>
+          <TouchableOpacity style={styles.stepperBtn} onPress={decrease}>
+            <Text style={styles.stepperText}>−</Text>
+          </TouchableOpacity>
+          <Text style={styles.quantityValue}>{quantity}</Text>
+          <TouchableOpacity style={styles.stepperBtn} onPress={increase}>
+            <Text style={styles.stepperText}>+</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <Text style={styles.total}>Total: ₹{total}</Text>
+      <Text style={styles.total}>Total: ₹{product.price * quantity}</Text>
 
       <TouchableOpacity style={styles.orderBtn} onPress={placeOrder} disabled={placing}>
-        {placing ? <ActivityIndicator color="#fff" /> : <Text style={styles.orderBtnText}>Place Order</Text>}
+        {placing ? <ActivityIndicator color="#fff" /> : <Text style={styles.orderText}>Place Order & Pay</Text>}
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, paddingTop: 55, backgroundColor: '#fff' },
-  back: { color: '#2d6a4f', fontWeight: '600', marginBottom: 12 },
+  container: { padding: 20, paddingTop: 55, flexGrow: 1 },
+  backBtn: { marginBottom: 12 },
+  backText: { color: '#2d6a4f', fontWeight: '600', fontSize: 15 },
   image: { width: '100%', height: 220, borderRadius: 12, marginBottom: 16, backgroundColor: '#eee' },
   imagePlaceholder: {},
   title: { fontSize: 22, fontWeight: 'bold' },
   artisan: { fontSize: 14, color: '#888', marginTop: 2 },
-  price: { fontSize: 20, fontWeight: 'bold', color: '#2d6a4f', marginTop: 8 },
-  desc: { fontSize: 14, color: '#444', marginTop: 10, lineHeight: 20 },
-  stock: { fontSize: 12, color: '#999', marginTop: 8 },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', marginTop: 20 },
-  qtyBtn: { width: 36, height: 36, borderRadius: 8, backgroundColor: '#f2f2f2', justifyContent: 'center', alignItems: 'center' },
-  qtyBtnText: { fontSize: 18, fontWeight: 'bold' },
-  qtyValue: { fontSize: 16, fontWeight: '600', marginHorizontal: 16 },
-  total: { fontSize: 16, fontWeight: 'bold', marginTop: 16 },
-  orderBtn: { backgroundColor: '#2d6a4f', padding: 14, borderRadius: 10, alignItems: 'center', marginTop: 16 },
-  orderBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  price: { fontSize: 20, color: '#2d6a4f', fontWeight: 'bold', marginTop: 10 },
+  description: { fontSize: 14, color: '#444', marginTop: 12, lineHeight: 20 },
+  stock: { fontSize: 13, color: '#888', marginTop: 10 },
+  quantityRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 24,
+  },
+  label: { fontSize: 15, fontWeight: '600' },
+  stepper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2', borderRadius: 8 },
+  stepperBtn: { paddingHorizontal: 16, paddingVertical: 8 },
+  stepperText: { fontSize: 18, fontWeight: '600' },
+  quantityValue: { fontSize: 16, fontWeight: '600', minWidth: 24, textAlign: 'center' },
+  total: { fontSize: 18, fontWeight: 'bold', marginTop: 20 },
+  orderBtn: {
+    backgroundColor: '#2d6a4f', padding: 16, borderRadius: 10,
+    alignItems: 'center', marginTop: 20,
+  },
+  orderText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 });

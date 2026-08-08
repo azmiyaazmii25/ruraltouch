@@ -6,6 +6,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
 import AddProductScreen from './AddProductScreen';
+import EditProductScreen from './EditProductScreen';
 import ArtisanOrders from './ArtisanOrders';
 
 const STATUS_COLORS = { pending: '#e67e22', approved: '#2d6a4f', rejected: '#c0392b' };
@@ -17,6 +18,7 @@ export default function ArtisanDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const fetchMyProducts = async () => {
     try {
@@ -50,6 +52,18 @@ export default function ArtisanDashboard() {
     );
   }
 
+  if (editingProduct) {
+    return (
+      <EditProductScreen
+        product={editingProduct}
+        onDone={() => {
+          setEditingProduct(null);
+          fetchMyProducts();
+        }}
+      />
+    );
+  }
+
   if (showOrders) {
     return <ArtisanOrders onBack={() => setShowOrders(false)} />;
   }
@@ -77,7 +91,7 @@ export default function ArtisanDashboard() {
         <Text style={styles.addBtnText}>View Orders Received</Text>
       </TouchableOpacity>
 
-      <Text style={styles.sectionLabel}>My Products</Text>
+      <Text style={styles.sectionLabel}>My Products (tap to edit)</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#e67e22" style={{ marginTop: 30 }} />
@@ -88,7 +102,7 @@ export default function ArtisanDashboard() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           ListEmptyComponent={<Text style={styles.empty}>No products yet. Add your first one!</Text>}
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <TouchableOpacity style={styles.card} onPress={() => setEditingProduct(item)}>
               {item.imageUrl ? (
                 <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
               ) : (
@@ -101,7 +115,7 @@ export default function ArtisanDashboard() {
                   <Text style={styles.badgeText}>{item.status}</Text>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           )}
         />
       )}
