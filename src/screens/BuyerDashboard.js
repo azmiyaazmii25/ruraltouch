@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
 import ProductDetailScreen from './ProductDetailScreen';
 import BuyerOrders from './BuyerOrders';
+import ProfileScreen from './ProfileScreen';
 
 const CATEGORIES = [
   { key: 'all', label: 'All' },
@@ -25,6 +26,7 @@ export default function BuyerDashboard() {
   const [category, setCategory] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showOrders, setShowOrders] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -61,6 +63,10 @@ export default function BuyerDashboard() {
     return <BuyerOrders onBack={() => setShowOrders(false)} />;
   }
 
+  if (showProfile) {
+    return <ProfileScreen onBack={() => setShowProfile(false)} />;
+  }
+
   const filtered = products.filter((p) => {
     const matchesCategory = category === 'all' || p.category === category;
     const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase());
@@ -90,6 +96,9 @@ export default function BuyerDashboard() {
       <View style={styles.header}>
         <Text style={styles.greeting}>Hi, {user.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setShowProfile(true)} style={{ marginRight: 16 }}>
+            <Text style={styles.myOrders}>Profile</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => setShowOrders(true)} style={{ marginRight: 16 }}>
             <Text style={styles.myOrders}>My Orders</Text>
           </TouchableOpacity>

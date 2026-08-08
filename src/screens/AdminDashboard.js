@@ -5,13 +5,17 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
+import AdminUsers from './AdminUsers';
+import ProfileScreen from './ProfileScreen';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [actingOn, setActingOn] = useState(null); // product id currently being approved/rejected
+  const [actingOn, setActingOn] = useState(null);
+  const [showUsers, setShowUsers] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const fetchPending = async () => {
     try {
@@ -39,7 +43,6 @@ export default function AdminDashboard() {
     setActingOn(id);
     try {
       await api.put(`/products/${id}/approve`, { status });
-      // Remove it from the pending list immediately (optimistic UI update)
       setProducts((prev) => prev.filter((p) => p._id !== id));
     } catch (err) {
       console.log('approve error', err.message);
@@ -48,6 +51,14 @@ export default function AdminDashboard() {
       setActingOn(null);
     }
   };
+
+  if (showUsers) {
+    return <AdminUsers onBack={() => setShowUsers(false)} />;
+  }
+
+  if (showProfile) {
+    return <ProfileScreen onBack={() => setShowProfile(false)} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -60,6 +71,14 @@ export default function AdminDashboard() {
           <Text style={styles.logout}>Logout</Text>
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity style={styles.actionBtn} onPress={() => setShowUsers(true)}>
+        <Text style={styles.actionBtnText}>Manage Users</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#2980b9' }]} onPress={() => setShowProfile(true)}>
+        <Text style={styles.actionBtnText}>Profile</Text>
+      </TouchableOpacity>
 
       <Text style={styles.sectionLabel}>Pending Product Approvals</Text>
 
@@ -88,16 +107,16 @@ export default function AdminDashboard() {
                 ) : (
                   <View style={styles.actionRow}>
                     <TouchableOpacity
-                      style={[styles.actionBtn, styles.approveBtn]}
+                      style={[styles.smallBtn, styles.approveBtn]}
                       onPress={() => handleDecision(item._id, 'approved')}
                     >
-                      <Text style={styles.actionText}>Approve</Text>
+                      <Text style={styles.smallBtnText}>Approve</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.actionBtn, styles.rejectBtn]}
+                      style={[styles.smallBtn, styles.rejectBtn]}
                       onPress={() => handleDecision(item._id, 'rejected')}
                     >
-                      <Text style={styles.actionText}>Reject</Text>
+                      <Text style={styles.smallBtnText}>Reject</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -116,7 +135,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: 'bold' },
   subtitle: { fontSize: 13, color: '#8e44ad', fontWeight: '600', marginTop: 2 },
   logout: { color: '#c0392b', fontWeight: '600' },
-  sectionLabel: { fontSize: 15, fontWeight: '600', marginBottom: 10, color: '#333' },
+  actionBtn: { backgroundColor: '#8e44ad', padding: 14, borderRadius: 10, alignItems: 'center', marginBottom: 12 },
+  actionBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  sectionLabel: { fontSize: 15, fontWeight: '600', marginBottom: 10, color: '#333', marginTop: 6 },
   empty: { textAlign: 'center', marginTop: 30, color: '#999' },
   card: {
     flexDirection: 'row', backgroundColor: '#f7f2fa', borderRadius: 10,
@@ -127,8 +148,8 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: '600' },
   cardMeta: { fontSize: 12, color: '#666', marginTop: 2 },
   actionRow: { flexDirection: 'row', marginTop: 10 },
-  actionBtn: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8, marginRight: 8 },
+  smallBtn: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8, marginRight: 8 },
   approveBtn: { backgroundColor: '#2d6a4f' },
   rejectBtn: { backgroundColor: '#c0392b' },
-  actionText: { color: '#fff', fontWeight: '600', fontSize: 12 },
+  smallBtnText: { color: '#fff', fontWeight: '600', fontSize: 12 },
 });

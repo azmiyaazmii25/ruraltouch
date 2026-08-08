@@ -8,6 +8,7 @@ import api from '../api/api';
 import AddProductScreen from './AddProductScreen';
 import EditProductScreen from './EditProductScreen';
 import ArtisanOrders from './ArtisanOrders';
+import ProfileScreen from './ProfileScreen';
 
 const STATUS_COLORS = { pending: '#e67e22', approved: '#2d6a4f', rejected: '#c0392b' };
 
@@ -19,6 +20,7 @@ export default function ArtisanDashboard() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   const fetchMyProducts = async () => {
     try {
@@ -68,6 +70,10 @@ export default function ArtisanDashboard() {
     return <ArtisanOrders onBack={() => setShowOrders(false)} />;
   }
 
+  if (showProfile) {
+    return <ProfileScreen onBack={() => setShowProfile(false)} />;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -89,6 +95,13 @@ export default function ArtisanDashboard() {
         onPress={() => setShowOrders(true)}
       >
         <Text style={styles.addBtnText}>View Orders Received</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.addBtn, { backgroundColor: '#8e44ad' }]}
+        onPress={() => setShowProfile(true)}
+      >
+        <Text style={styles.addBtnText}>Profile</Text>
       </TouchableOpacity>
 
       <Text style={styles.sectionLabel}>My Products (tap to edit)</Text>
