@@ -1,56 +1,132 @@
-# Welcome to your Expo app 👋
+# RuralTouch 🧵
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Connecting rural artisans with buyers — a full-stack mobile marketplace.**
 
-## Get started
+RuralTouch is a role-based e-commerce platform built for craftmakers, mehendi artists, tailors, and makeup artists to list and sell their work directly to buyers, with an admin approval layer to keep quality high. Built end-to-end as a portfolio project: React Native mobile app, Node/Express API, MongoDB Atlas, Cloudinary image hosting, and Razorpay test-mode payments.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## ✨ Features
 
-2. Start the app
+- **Three user roles** — Buyer, Artisan, Admin — each with a dedicated dashboard
+- **JWT authentication** with bcrypt password hashing
+- **Product listings** with an admin approval workflow (pending → approved/rejected)
+- **Image uploads** via Cloudinary, streamed straight from the phone camera roll
+- **Search & category filtering** for browsing products
+- **Order placement + tracking**, with a full status lifecycle (placed → shipped → delivered)
+- **Razorpay payment integration** (test mode) using a WebView checkout, with server-side signature verification
+- **Feedback & star ratings** on delivered orders
+- **Artisan tools** — add, edit, delete products; view and update incoming orders
+- **Admin tools** — approve/reject listings, view all registered users
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🛠 Tech Stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+| Layer | Technology |
+|---|---|
+| Mobile app | React Native (Expo SDK 54), Expo Router |
+| Backend | Node.js, Express |
+| Database | MongoDB Atlas (Mongoose) |
+| Image storage | Cloudinary |
+| Payments | Razorpay (test mode) |
+| Auth | JWT + bcrypt |
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 📱 Screenshots
 
-When you're ready, run:
+| Login | Register |
+|---|---|
+| ![Login](screenshots/01-login.jpg) | ![Register](screenshots/02-register.jpg) |
 
-```bash
-npm run reset-project
+| Buyer — Browse Products | Product Detail |
+|---|---|
+| ![Buyer browse](screenshots/03-buyer-browse.jpg) | ![Product detail](screenshots/04-product-detail.jpg) |
+
+| My Orders | Feedback & Rating |
+|---|---|
+| ![My orders](screenshots/05-my-orders.jpg) | ![Feedback](screenshots/06-feedback-rating.jpg) |
+
+| Artisan Dashboard | Add Product |
+|---|---|
+| ![Artisan dashboard](screenshots/07-artisan-dashboard.jpg) | ![Add product](screenshots/08-add-product.jpg) |
+
+---
+
+## 🏗 Architecture
+
+```
+ruraltouch/
+├── backend/
+│   ├── models/          # User, Product, Order, Feedback (Mongoose schemas)
+│   ├── routes/          # auth, products, orders, feedback, users
+│   ├── middleware/       # JWT auth guard, role-based authorize(), Cloudinary upload
+│   └── server.js
+└── mobile/
+    └── src/
+        ├── app/          # Expo Router entry (_layout.tsx, index.tsx)
+        ├── screens/      # Role dashboards + feature screens
+        ├── context/      # AuthContext (JWT + user state)
+        └── api/          # Axios instance with token interceptor
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+**Role-based routing:** a single `switch` on `user.role` in `index.tsx` renders the correct dashboard — Buyer, Artisan, or Admin — after login. Each dashboard composes its own sub-screens (Add Product, My Orders, Profile, etc.) via local state rather than a nested navigator, keeping the app lightweight.
 
-### Other setup steps
+**Security model:** admin accounts are **provisioned, not self-registered** — there's no "Admin" option at signup. This follows the principle of least privilege: only an existing admin (via direct database access in this project's scope) can grant admin rights, preventing privilege escalation through the public registration form.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+---
 
-## Learn more
+## 🚀 Getting Started
 
-To learn more about developing your project with Expo, look at the following resources:
+### Backend
+```bash
+cd backend
+npm install
+```
+Create a `.env` file:
+```
+MONGO_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_jwt_secret
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+RAZORPAY_KEY_ID=your_razorpay_test_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_test_key_secret
+```
+```bash
+npx nodemon server.js
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Mobile app
+```bash
+cd mobile
+npm install
+npx expo start
+```
+Update the API base URL in `src/api/api.js` to point at your backend's address.
 
-## Join the community
+Scan the QR code with **Expo Go** (Android/iOS) to run the app on your device.
 
-Join our community of developers creating universal apps.
+---
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🔑 Test Accounts
+
+Since admin signup is intentionally disabled, seed an admin manually:
+1. Register a normal account through the app
+2. In MongoDB Atlas, open the `users` collection and change that document's `role` field to `"admin"`
+
+---
+
+## 📌 Roadmap / Possible Extensions
+
+- Standalone APK build (EAS Build) for install-without-Expo-Go demos
+- Push notifications on order status changes
+- In-app chat between buyer and artisan
+- Analytics dashboard for artisans (sales over time)
+
+---
+
+## 👤 Author
+
+Built by **Azmiya** as a full-stack portfolio project.
