@@ -6,6 +6,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
 import ProductDetailScreen from './ProductDetailScreen';
+import BuyerOrders from './BuyerOrders';
 
 const CATEGORIES = [
   { key: 'all', label: 'All' },
@@ -23,6 +24,7 @@ export default function BuyerDashboard() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showOrders, setShowOrders] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -55,6 +57,10 @@ export default function BuyerDashboard() {
     );
   }
 
+  if (showOrders) {
+    return <BuyerOrders onBack={() => setShowOrders(false)} />;
+  }
+
   const filtered = products.filter((p) => {
     const matchesCategory = category === 'all' || p.category === category;
     const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase());
@@ -83,9 +89,14 @@ export default function BuyerDashboard() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.greeting}>Hi, {user.name}</Text>
-        <TouchableOpacity onPress={logout}>
-          <Text style={styles.logout}>Logout</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setShowOrders(true)} style={{ marginRight: 16 }}>
+            <Text style={styles.myOrders}>My Orders</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={logout}>
+            <Text style={styles.logout}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <TextInput
@@ -136,6 +147,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 55, paddingHorizontal: 16, backgroundColor: '#fff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   greeting: { fontSize: 20, fontWeight: 'bold' },
+  myOrders: { color: '#2d6a4f', fontWeight: '600' },
   logout: { color: '#c0392b', fontWeight: '600' },
   search: {
     backgroundColor: '#f2f2f2', borderRadius: 10, paddingHorizontal: 14,
