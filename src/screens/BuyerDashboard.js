@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
+import ProductDetailScreen from './ProductDetailScreen';
 
 const CATEGORIES = [
   { key: 'all', label: 'All' },
@@ -21,6 +22,7 @@ export default function BuyerDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const fetchProducts = async () => {
     try {
@@ -44,6 +46,15 @@ export default function BuyerDashboard() {
     fetchProducts();
   }, []);
 
+  if (selectedProduct) {
+    return (
+      <ProductDetailScreen
+        product={selectedProduct}
+        onBack={() => setSelectedProduct(null)}
+      />
+    );
+  }
+
   const filtered = products.filter((p) => {
     const matchesCategory = category === 'all' || p.category === category;
     const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase());
@@ -53,7 +64,7 @@ export default function BuyerDashboard() {
   const renderProduct = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => Alert.alert(item.title, `₹${item.price}\nby ${item.artisan?.name || 'Unknown'}`)}
+      onPress={() => setSelectedProduct(item)}
     >
       {item.imageUrl ? (
         <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />

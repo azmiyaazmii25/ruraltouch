@@ -6,6 +6,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
 import AddProductScreen from './AddProductScreen';
+import ArtisanOrders from './ArtisanOrders';
 
 const STATUS_COLORS = { pending: '#e67e22', approved: '#2d6a4f', rejected: '#c0392b' };
 
@@ -15,6 +16,7 @@ export default function ArtisanDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [showOrders, setShowOrders] = useState(false);
 
   const fetchMyProducts = async () => {
     try {
@@ -48,6 +50,10 @@ export default function ArtisanDashboard() {
     );
   }
 
+  if (showOrders) {
+    return <ArtisanOrders onBack={() => setShowOrders(false)} />;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -62,6 +68,13 @@ export default function ArtisanDashboard() {
 
       <TouchableOpacity style={styles.addBtn} onPress={() => setShowAddProduct(true)}>
         <Text style={styles.addBtnText}>+ Add Product</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.addBtn, { backgroundColor: '#2980b9' }]}
+        onPress={() => setShowOrders(true)}
+      >
+        <Text style={styles.addBtnText}>View Orders Received</Text>
       </TouchableOpacity>
 
       <Text style={styles.sectionLabel}>My Products</Text>
@@ -102,9 +115,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: 'bold' },
   subtitle: { fontSize: 13, color: '#e67e22', fontWeight: '600', marginTop: 2 },
   logout: { color: '#c0392b', fontWeight: '600' },
-  addBtn: { backgroundColor: '#e67e22', padding: 14, borderRadius: 10, alignItems: 'center', marginBottom: 18 },
+  addBtn: { backgroundColor: '#e67e22', padding: 14, borderRadius: 10, alignItems: 'center', marginBottom: 12 },
   addBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
-  sectionLabel: { fontSize: 15, fontWeight: '600', marginBottom: 10, color: '#333' },
+  sectionLabel: { fontSize: 15, fontWeight: '600', marginBottom: 10, color: '#333', marginTop: 6 },
   empty: { textAlign: 'center', marginTop: 30, color: '#999' },
   card: {
     flexDirection: 'row', backgroundColor: '#faf5f0', borderRadius: 10,
